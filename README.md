@@ -2,6 +2,8 @@
 
 A Real-Time Streaming Data Science System for Telemetry Ingestion, Multi-Model Anomaly Detection, Incident Risk Prediction, and Service Reliability Operations.
 
+![Infrastructure Intelligence Platform Live Operations Dashboard](docs/images/dashboard_overview.png)
+
 ---
 
 ## 1. WHAT: System Definition, Objectives, and Capabilities
