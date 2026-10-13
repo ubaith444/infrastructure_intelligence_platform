@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TelemetryEvent",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_time",
+    "service",
+    "environment",
+    "event_type",
+    "metric_name",
+    "metric_value"
+  ],
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_time": { "type": "string", "format": "date-time" },
+    "service": { "type": "string" },
+    "environment": { "type": "string", "enum": ["production", "staging", "synthetic-scale-test"] },
+    "event_type": { "type": "string", "enum": ["service_metric", "system_metric", "log_event", "trace_span", "status_feed"] },
+    "metric_name": { "type": "string" },
+    "metric_value": { "type": "number" },
+    "unit": { "type": "string" },
+    "host_id": { "type": "string" },
+    "trace_id": { "type": "string" },
+    "span_id": { "type": "string" },
+    "attributes": { "type": "object" }
+  }
+}

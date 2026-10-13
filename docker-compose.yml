@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    container_name: iip-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - IIP_ENV=production
+      - IIP_STORAGE_DIR=/app/storage
+    volumes:
+      - ./data:/app/data
+      - ./storage:/app/storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/pipeline/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  telemetry-demo:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.telemetry-demo
+    container_name: iip-telemetry-demo
+    ports:
+      - "8001:8001"
+    environment:
+      - IIP_INGESTION_URL=http://api:8000/api/telemetry/ingest
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.100.0
+    container_name: iip-otel-collector
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./infrastructure/otel/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+networks:
+  default:
+    name: iip-network

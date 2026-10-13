@@ -1,0 +1,20 @@
+{
+  "topology_version": "1.0.0",
+  "nodes": [
+    { "id": "edge-gateway", "name": "Edge Gateway", "tier": "EDGE", "criticality": "TIER_0" },
+    { "id": "auth-service", "name": "Auth Service", "tier": "CORE", "criticality": "TIER_1" },
+    { "id": "catalog-service", "name": "Catalog Service", "tier": "PRODUCT", "criticality": "TIER_2" },
+    { "id": "checkout-api", "name": "Checkout API", "tier": "COMMERCE", "criticality": "TIER_1" },
+    { "id": "payment-service", "name": "Payment Service", "tier": "COMMERCE", "criticality": "TIER_0" },
+    { "id": "inventory-service", "name": "Inventory Service", "tier": "STORAGE", "criticality": "TIER_2" },
+    { "id": "notification-service", "name": "Notification Service", "tier": "ASYNC", "criticality": "TIER_3" }
+  ],
+  "edges": [
+    { "source": "edge-gateway", "target": "auth-service", "protocol": "gRPC" },
+    { "source": "edge-gateway", "target": "catalog-service", "protocol": "HTTP/2" },
+    { "source": "edge-gateway", "target": "checkout-api", "protocol": "HTTP/2" },
+    { "source": "checkout-api", "target": "payment-service", "protocol": "gRPC" },
+    { "source": "checkout-api", "target": "inventory-service", "protocol": "gRPC" },
+    { "source": "checkout-api", "target": "notification-service", "protocol": "AMQP" }
+  ]
+}

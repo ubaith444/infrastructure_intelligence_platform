@@ -1,0 +1,61 @@
+[
+  {
+    "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "span_id": "00f067aa0ba902b7",
+    "parent_span_id": null,
+    "service_name": "edge-gateway",
+    "operation_name": "HTTP GET /api/v1/orders",
+    "start_time_unix_nano": 1776000000000000000,
+    "duration_millis": 85.4,
+    "status_code": "OK",
+    "attributes": {
+      "http.method": "GET",
+      "http.status_code": 200,
+      "http.target": "/api/v1/orders",
+      "net.peer.ip": "192.168.1.100"
+    }
+  },
+  {
+    "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "span_id": "5fb397be34d23b0f",
+    "parent_span_id": "00f067aa0ba902b7",
+    "service_name": "checkout-api",
+    "operation_name": "process_checkout",
+    "start_time_unix_nano": 1776000000010000000,
+    "duration_millis": 62.1,
+    "status_code": "OK",
+    "attributes": {
+      "rpc.system": "grpc",
+      "rpc.service": "CheckoutService",
+      "rpc.method": "ProcessOrder"
+    }
+  },
+  {
+    "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "span_id": "32025170d1052026",
+    "parent_span_id": "5fb397be34d23b0f",
+    "service_name": "order-service",
+    "operation_name": "create_order_record",
+    "start_time_unix_nano": 1776000000015000000,
+    "duration_millis": 40.5,
+    "status_code": "OK",
+    "attributes": {
+      "db.system": "postgresql",
+      "db.statement": "INSERT INTO orders VALUES (...)"
+    }
+  },
+  {
+    "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "span_id": "9934f82810e4a771",
+    "parent_span_id": "32025170d1052026",
+    "service_name": "payment-service",
+    "operation_name": "charge_customer",
+    "start_time_unix_nano": 1776000000020000000,
+    "duration_millis": 32.8,
+    "status_code": "OK",
+    "attributes": {
+      "payment.gateway": "stripe",
+      "payment.currency": "USD"
+    }
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "event_id": "evt-init-01",
+    "event_time": "2026-10-12T12:00:00Z",
+    "service": "checkout-api",
+    "environment": "production",
+    "event_type": "service_metric",
+    "metric_name": "request_latency_ms",
+    "metric_value": 45.2,
+    "unit": "ms",
+    "host_id": "host-01",
+    "attributes": { "http_method": "POST", "http_route": "/api/v1/checkout", "status_code": "200" }
+  },
+  {
+    "event_id": "evt-init-02",
+    "event_time": "2026-10-12T12:00:01Z",
+    "service": "payment-service",
+    "environment": "production",
+    "event_type": "service_metric",
+    "metric_name": "error_rate",
+    "metric_value": 0.0,
+    "unit": "ratio",
+    "host_id": "host-02",
+    "attributes": { "http_method": "POST", "http_route": "/charges", "status_code": "200" }
+  }
+]

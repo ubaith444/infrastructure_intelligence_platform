@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing & caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Frontend
+apps/dashboard/node_modules/
+node_modules/
+.vite/
+dist/
+
+# Local databases, lakes & logs
+*.log
+data/lakehouse/
+data/operational_metadata.db
+storage/telemetry.events/
+storage/consumer_offsets.json
+
+# Environments
+.venv/
+venv/
+ENV/
+
+# System & IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

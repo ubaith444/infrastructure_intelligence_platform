@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infrastructure Intelligence Platform | Operations & Predictive Intelligence</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+    <!-- Header Navigation Bar -->
+    <header class="header-bar">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div class="brand-title">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <span>Infrastructure Intelligence Platform</span>
+            </div>
+            <span class="brand-badge">Scale & Release &bull; v1.5.0</span>
+            <span id="activeFaultPill" class="badge badge-critical" style="display:none;">
+                Controlled Chaos Active
+            </span>
+            <span id="replayPill" class="badge badge-warning" style="display:none;">
+                Replay Active
+            </span>
+        </div>
+        <div style="display:flex;gap:16px;font-size:12px;align-items:center;flex-wrap:wrap;">
+            <span>Data Quality: <span id="pipelineDqBadge" class="badge badge-healthy">HEALTHY</span></span>
+            <span>Security: <span id="securityBadge" class="badge badge-info">ENFORCED</span></span>
+            <span id="liveClock" style="font-family:monospace;color:#64748b;font-weight:600;">UTC --:--:--</span>
+            
+            <!-- Real-Time Update Controls -->
+            <div style="display:flex;align-items:center;gap:8px;padding-left:12px;border-left:1px solid #e2e8f0;">
+                <button id="btnPauseResume" class="btn btn-sm btn-outline" onclick="togglePolling()" title="Pause or Resume live polling" style="padding:3px 8px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px;">
+                    <span id="pauseResumeIcon">⏸</span> <span id="pauseResumeText">Pause</span>
+                </button>
+                <select id="pollIntervalSelect" onchange="setPollInterval(this.value)" style="padding:3px 6px;font-size:11px;border:1px solid #cbd5e1;border-radius:4px;background:#ffffff;color:#0f172a;font-weight:600;">
+                    <option value="5000" selected>5s API Polling</option>
+                    <option value="2200">2.2s Demo Animation</option>
+                    <option value="1000">1s Live Stream</option>
+                </select>
+                <span id="lastUpdatedIndicator" style="font-size:11px;color:#64748b;font-family:monospace;min-width:110px;">Updated: just now</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+
+        <!-- Operational Questions Triaging Banner (Answers the 4 Core Questions) -->
+        <section class="triage-banner" id="triageBanner">
+            <div class="triage-header">
+                <div class="triage-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    Real-Time Operational Triage & Remediation Matrix
+                </div>
+                <div style="font-size:11px;color:#64748b;">
+                    Automated triaging answering four key incident questions
+                </div>
+            </div>
+            <div class="triage-grid">
+                <!-- Q1: What is failing? -->
+                <div class="triage-card q1">
+                    <div>
+                        <div class="triage-question">1. What is failing?</div>
+                        <div class="triage-answer" id="triageFailingService">All systems nominal</div>
+                    </div>
+                    <div class="triage-subtext" id="triageBlastRadius">Blast radius: 0 degraded services</div>
+                </div>
+
+                <!-- Q2: How severe is it? -->
+                <div class="triage-card q2">
+                    <div>
+                        <div class="triage-question">2. How severe is it?</div>
+                        <div class="triage-answer" id="triageSeverity">
+                            <span class="badge badge-healthy" id="triageSeverityBadge">NOMINAL</span>
+                        </div>
+                    </div>
+                    <div class="triage-subtext" id="triageErrorBudget">Error budget burn: 1.0x &bull; 99.8% remaining</div>
+                </div>
+
+                <!-- Q3: What evidence supports the alert? -->
+                <div class="triage-card q3">
+                    <div>
+                        <div class="triage-question">3. What evidence supports the alert?</div>
+                        <div class="triage-answer" id="triageEvidence">MAD & IF baselines nominal</div>
+                    </div>
+                    <div class="triage-subtext" id="triageDetectorStats">3 models voting: Robust MAD, IF, River</div>
+                </div>
+
+                <!-- Q4: What should the engineer investigate next? -->
+                <div class="triage-card q4">
+                    <div>
+                        <div class="triage-question">4. What should the engineer investigate next?</div>
+                        <div class="triage-answer" id="triageNextAction">Continue standard monitoring</div>
+                    </div>
+                    <div class="triage-subtext" id="triageConfidence">Candidate confidence: --</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Screen Navigation Tabs -->
+        <nav class="screen-tabs-bar" role="tablist">
+            <button class="tab-btn active" id="tabBtnScreen1" onclick="switchScreen('screen1')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Screen 1 — Operations Overview
+            </button>
+            <button class="tab-btn" id="tabBtnScreen2" onclick="switchScreen('screen2')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Screen 2 — Anomaly Explorer
+                <span class="tab-badge" id="tabAnomalyCountBadge">0</span>
+            </button>
+            <button class="tab-btn" id="tabBtnScreen3" onclick="switchScreen('screen3')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Screen 3 — Incident Investigation
+                <span class="tab-badge" id="tabIncidentCountBadge">0</span>
+            </button>
+            <button class="tab-btn" id="tabBtnScreen4" onclick="switchScreen('screen4')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Screen 4 — Data & Model Quality
+            </button>
+        </nav>
+
+        <!-- =====================================================================
+             SCREEN 1: OPERATIONS OVERVIEW
+             ===================================================================== -->
+        <div id="screen1" class="screen-view active">
+            <!-- Telemetry & Health KPI Strip -->
+            <section class="telemetry-strip">
+                <div class="metric-card">
+                    <div class="metric-card-label">Throughput <span>EPS</span></div>
+                    <div class="metric-card-value" id="statEps">0.0 EPS</div>
+                    <div class="metric-card-sub">Single-node vectorized ingestion</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Latency Percentiles <span>p50 / p90 / p99</span></div>
+                    <div class="metric-card-value" id="statLatencyPercentiles" style="font-size:20px;">-- / -- / -- ms</div>
+                    <div class="metric-card-sub">End-to-end rolling window latency</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Consumer Lag <span>Offset</span></div>
+                    <div class="metric-card-value" id="statLag">0 events</div>
+                    <div class="metric-card-sub">Durable broker partition lag</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Error Budget <span>SLO 99.9%</span></div>
+                    <div class="metric-card-value" id="statErrorBudget" style="color:#16a34a;">99.8%</div>
+                    <div class="metric-card-sub" id="statBurnRate">Burn rate: 1.0x baseline</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-card-label">Active Incidents <span>Failing</span></div>
+                    <div class="metric-card-value" id="statActiveIncidents" style="color:#0f172a;">0</div>
+                    <div class="metric-card-sub">Downstream symptom suppressed</div>
+                </div>
+            </section>
+ 
+            <!-- What's New: Animated Plots, Resource Utilization & Anomaly Signals -->
+            <section class="grid-3col" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:16px;margin-bottom:20px;">
+                <!-- 1. Animated Traffic & Performance Plots -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">1. Traffic & Performance Dynamics</div>
+                            <div class="panel-subtitle">Rolling request volume, P95 latency & error-rate transitions</div>
+                        </div>
+                        <span class="badge badge-info" id="trafficDynamicsBadge">Live Stream</span>
+                    </div>
+                    <div class="panel-body" style="padding:14px;position:relative;">
+                        <canvas id="trafficPerformanceCanvas" width="520" height="220" class="chart-canvas"></canvas>
+                        <div style="display:flex;justify-content:center;gap:14px;margin-top:8px;font-size:11px;color:#64748b;">
+                            <span><span style="display:inline-block;width:10px;height:3px;background:#0284c7;margin-right:4px;"></span>Requests (req/s)</span>
+                            <span><span style="display:inline-block;width:10px;height:3px;background:#d97706;margin-right:4px;"></span>P95 Latency (ms)</span>
+                            <span><span style="display:inline-block;width:10px;height:3px;background:#dc2626;margin-right:4px;"></span>Error Rate (%)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Resource Utilization Analysis -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">2. Resource Utilization Analysis</div>
+                            <div class="panel-subtitle">Live CPU & memory trend lines with interactive tooltips</div>
+                        </div>
+                        <span class="badge badge-healthy" id="resourceUtilBadge">Nominal</span>
+                    </div>
+                    <div class="panel-body" style="padding:14px;position:relative;" id="resourceUtilWrapper">
+                        <canvas id="resourceUtilCanvas" width="520" height="220" class="chart-canvas" style="cursor:crosshair;"></canvas>
+                        <div id="resourceInteractiveTooltip" class="chart-interactive-tooltip"></div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px;color:#64748b;">
+                            <div style="display:flex;gap:14px;">
+                                <span><span style="display:inline-block;width:10px;height:3px;background:#0ea5e9;margin-right:4px;"></span>CPU Utilization</span>
+                                <span><span style="display:inline-block;width:10px;height:3px;background:#8b5cf6;margin-right:4px;"></span>Memory Utilization</span>
+                            </div>
+                            <span style="font-size:10px;">Hover chart to inspect</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Anomaly Signal Visualization -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">3. Anomaly Signal Visualization</div>
+                            <div class="panel-subtitle">Animated score bars with threshold line at 70/100</div>
+                        </div>
+                        <span class="badge badge-neutral" id="anomalySignalThresholdBadge">Threshold: 70</span>
+                    </div>
+                    <div class="panel-body" style="padding:14px;max-height:260px;overflow-y:auto;" id="anomalySignalsBody">
+                        <div id="anomalySignalsList">
+                            <!-- Dynamically populated with animated score bars and 70 threshold line -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2-Column: Live Services Table & Topology Graph -->
+            <section class="grid-2col">
+                <!-- Left: Live Services Health Table -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Monitored Service Inventory & Health</div>
+                            <div class="panel-subtitle">Real-time telemetry, behavioral baselines & 10m forward incident risk</div>
+                        </div>
+                        <span style="font-size:11px;color:#64748b;">Live updating</span>
+                    </div>
+                    <div class="panel-body" style="padding:0;overflow-x:auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Status</th>
+                                    <th>Req/s</th>
+                                    <th>Error %</th>
+                                    <th>Latency</th>
+                                    <th>10m Risk</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="servicesTableBody">
+                                <tr><td colspan="7" style="text-align:center;padding:16px;">Loading service telemetry...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right: Service Topology & Blast Radius -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Service Dependency Graph (Topology)</div>
+                            <div class="panel-subtitle">Click node to inspect service blast radius & callers</div>
+                        </div>
+                        <span id="selectedTopologyNodeBadge" class="badge badge-info">order-service</span>
+                    </div>
+                    <div class="panel-body" style="text-align:center;padding:12px;">
+                        <canvas id="topologyCanvas" width="580" height="340" style="background:#ffffff;border:1px solid #f1f5f9;border-radius:6px;width:100%;max-width:580px;height:auto;cursor:pointer;"></canvas>
+                        <div style="margin-top:10px;font-size:11px;color:#64748b;display:flex;justify-content:center;gap:18px;">
+                            <span><span style="display:inline-block;width:8px;height:8px;background:#16a34a;border-radius:50%;margin-right:4px;"></span>Healthy</span>
+                            <span><span style="display:inline-block;width:8px;height:8px;background:#d97706;border-radius:50%;margin-right:4px;"></span>Degraded / Symptom</span>
+                            <span><span style="display:inline-block;width:8px;height:8px;background:#dc2626;border-radius:50%;margin-right:4px;"></span>Critical Anomaly Origin</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Operational Alert Queue & Fault Injection Strip -->
+            <section class="grid-2col">
+                <!-- Left: Operational Alert Queue -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Operational Alert Queue & Symptom Suppression</div>
+                            <div class="panel-subtitle" id="alertBudgetDisplay">Budget: 5 max firing &bull; 10% Alert Budget Quota</div>
+                        </div>
+                        <span class="badge badge-neutral" id="alertsCountBadge">0 Alerts</span>
+                    </div>
+                    <div class="panel-body" style="padding:0;overflow-x:auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Service</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Suppression / Precedence</th>
+                                    <th style="text-align:right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alertsTableBody">
+                                <tr><td colspan="6" style="text-align:center;padding:14px;">Loading alerts...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right: Controlled Chaos Fault Injection Harness -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Controlled Chaos Fault Harness</div>
+                            <div class="panel-subtitle">Authorized development failure injection scenarios</div>
+                        </div>
+                        <span id="faultHarnessStatusBadge" class="badge badge-healthy">IDLE</span>
+                    </div>
+                    <div class="panel-body">
+                        <p style="font-size:12px;color:#64748b;margin-bottom:14px;">
+                            Trigger synthetic failure cascades to validate anomaly detectors, alert suppression, and candidate origin ranking:
+                        </p>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+                            <button class="btn btn-outline" onclick="triggerFault('payment_cascade')">
+                                <span style="display:inline-block;width:6px;height:6px;background:#dc2626;border-radius:50%;"></span>
+                                Payment Failure Cascade
+                            </button>
+                            <button class="btn btn-outline" onclick="triggerFault('inventory_cpu_exhaustion')">
+                                <span style="display:inline-block;width:6px;height:6px;background:#d97706;border-radius:50%;"></span>
+                                Inventory CPU Saturation
+                            </button>
+                            <button class="btn btn-outline" onclick="triggerFault('gateway_traffic_surge')">
+                                <span style="display:inline-block;width:6px;height:6px;background:#0284c7;border-radius:50%;"></span>
+                                Edge Traffic Surge
+                            </button>
+                            <button class="btn btn-danger" onclick="clearFault()">
+                                Clear Active Faults
+                            </button>
+                        </div>
+                        <div style="font-size:11px;color:#64748b;background:#f8fafc;padding:10px;border-radius:4px;border:1px solid #e2e8f0;">
+                            <strong>Note:</strong> Online streaming density models automatically freeze learning during active incidents to prevent contaminated baselines.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- =====================================================================
+             SCREEN 2: ANOMALY EXPLORER
+             ===================================================================== -->
+        <div id="screen2" class="screen-view">
+            <!-- Anomaly Explorer Controls Bar -->
+            <div class="panel-card" style="margin-bottom:20px;padding:14px 20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:16px;">
+                        <div>
+                            <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">Target Service:</label>
+                            <select id="explorerServiceSelect" style="padding:6px 12px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;" onchange="selectService(this.value)">
+                                <option value="order-service">order-service</option>
+                                <option value="payment-service">payment-service</option>
+                                <option value="inventory-service">inventory-service</option>
+                                <option value="checkout-api">checkout-api</option>
+                                <option value="catalog-service">catalog-service</option>
+                                <option value="auth-service">auth-service</option>
+                                <option value="notification-service">notification-service</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">Primary Metric:</label>
+                            <select id="explorerMetricSelect" style="padding:6px 12px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;" onchange="renderAnomalyChart()">
+                                <option value="latency">Request Latency (p90 ms)</option>
+                                <option value="error_rate">Error Rate (%)</option>
+                                <option value="cpu">CPU Utilization (%)</option>
+                                <option value="request_rate">Throughput (req/s)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;">Time Range:</span>
+                        <button class="btn btn-sm btn-outline active" onclick="setTimeRange('5m', this)">5m</button>
+                        <button class="btn btn-sm btn-outline" onclick="setTimeRange('15m', this)">15m</button>
+                        <button class="btn btn-sm btn-outline" onclick="setTimeRange('1h', this)">1h</button>
+                        <button class="btn btn-sm btn-outline" onclick="setTimeRange('24h', this)">24h</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Anomaly Chart with Baseline Comparison & Anomaly Markers -->
+            <div class="panel-card" style="margin-bottom:20px;">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title" id="explorerChartTitle">order-service — Time-Series & Anomaly Detection Markers</div>
+                        <div class="panel-subtitle">Interactive series with rolling median baseline and seasonal MAD threshold band</div>
+                    </div>
+                    <div style="display:flex;gap:16px;font-size:11px;color:#64748b;">
+                        <span><span style="display:inline-block;width:12px;height:3px;background:#0284c7;margin-right:4px;"></span>Observed Telemetry</span>
+                        <span><span style="display:inline-block;width:12px;height:2px;background:#94a3b8;border-style:dashed;margin-right:4px;"></span>Rolling Median Baseline</span>
+                        <span><span style="display:inline-block;width:12px;height:8px;background:rgba(2,132,199,0.12);margin-right:4px;"></span>MAD Threshold Band (3.5x)</span>
+                        <span><span style="display:inline-block;width:8px;height:8px;background:#dc2626;border-radius:50%;margin-right:4px;"></span>Anomaly Marker</span>
+                    </div>
+                </div>
+                <div class="panel-body" style="padding:16px;">
+                    <canvas id="anomalyExplorerCanvas" width="1160" height="320" style="background:#ffffff;border:1px solid #f1f5f9;border-radius:6px;width:100%;height:auto;cursor:crosshair;"></canvas>
+                    <div id="explorerTooltip" style="margin-top:8px;font-size:11px;color:#475569;display:flex;justify-content:space-between;">
+                        <span>Hover over chart to inspect telemetry values and anomaly attribution details.</span>
+                        <span id="explorerSummaryStats">Current value: -- | Rolling median: -- | Status: NOMINAL</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Explanations & Feature Attribution Grid -->
+            <section class="grid-3col">
+                <!-- Detector 1: Robust Statistical MAD -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div class="panel-title">1. Robust Statistical MAD</div>
+                        <span class="badge badge-info" id="madStatusBadge">ACTIVE</span>
+                    </div>
+                    <div class="panel-body" style="font-size:12px;">
+                        <div style="font-family:monospace;background:#f8fafc;padding:8px;border-radius:4px;border:1px solid #e2e8f0;margin-bottom:10px;font-size:11px;">
+                            z_r = 0.6745 * (x - m) / MAD
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:#64748b;">Current z_r Score:</span>
+                            <strong id="madZrScore">1.14</strong>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:#64748b;">Rolling Median (m):</span>
+                            <strong id="madMedianVal">45.0 ms</strong>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:#64748b;">Zero-MAD Fallback:</span>
+                            <span style="color:#16a34a;font-weight:600;">ACTIVE (1e-4 Guard)</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span style="color:#64748b;">Seasonality Multiplier:</span>
+                            <strong id="madSeasonality">1.05x Diurnal</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detector 2: Multivariate Subspace Isolation Forest -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div class="panel-title">2. Isolation Forest (Subspace)</div>
+                        <span class="badge badge-info" id="ifStatusBadge">ACTIVE</span>
+                    </div>
+                    <div class="panel-body" style="font-size:12px;">
+                        <div style="margin-bottom:8px;display:flex;justify-content:space-between;">
+                            <span style="color:#64748b;">Subspace Anomaly Score:</span>
+                            <strong id="ifScore">0.24</strong>
+                        </div>
+                        <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">Feature Attributions:</div>
+                        <div style="margin-bottom:4px;">
+                            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;">
+                                <span>Latency p90</span><span id="attribLat">48%</span>
+                            </div>
+                            <div style="background:#e2e8f0;height:4px;border-radius:2px;"><div id="barLat" style="background:#0284c7;width:48%;height:100%;"></div></div>
+                        </div>
+                        <div style="margin-bottom:4px;">
+                            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;">
+                                <span>Error Rate</span><span id="attribErr">24%</span>
+                            </div>
+                            <div style="background:#e2e8f0;height:4px;border-radius:2px;"><div id="barErr" style="background:#dc2626;width:24%;height:100%;"></div></div>
+                        </div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;">
+                                <span>CPU Pressure</span><span id="attribCpu">18%</span>
+                            </div>
+                            <div style="background:#e2e8f0;height:4px;border-radius:2px;"><div id="barCpu" style="background:#d97706;width:18%;height:100%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detector 3: River Streaming HalfSpaceTrees -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div class="panel-title">3. River Streaming HalfSpace</div>
+                        <span class="badge badge-info" id="riverStatusBadge">ONLINE</span>
+                    </div>
+                    <div class="panel-body" style="font-size:12px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:#64748b;">Streaming Density Score:</span>
+                            <strong id="riverScore">0.18</strong>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:#64748b;">ADWIN Concept Drift:</span>
+                            <span id="riverDriftBadge" class="badge badge-healthy">STABLE</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:#64748b;">Incident Freeze State:</span>
+                            <span id="riverFreezeBadge" class="badge badge-neutral">UNFROZEN</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span style="color:#64748b;">Trees in Ensemble:</span>
+                            <strong>25 HalfSpace Trees</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Anomaly Detections Table -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div class="panel-title">Recent Anomaly Detections Feed</div>
+                    <span style="font-size:11px;color:#64748b;">Multi-Model Arbiter detections with attribution narratives</span>
+                </div>
+                <div class="panel-body" style="padding:0;overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Service</th>
+                                <th>Detector</th>
+                                <th>Score / Severity</th>
+                                <th>Attribution Narrative</th>
+                            </tr>
+                        </thead>
+                        <tbody id="anomaliesTableBody">
+                            <tr><td colspan="5" style="text-align:center;padding:14px;">Listening for anomaly events...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- =====================================================================
+             SCREEN 3: INCIDENT INVESTIGATION
+             ===================================================================== -->
+        <div id="screen3" class="screen-view">
+            <!-- Active Incident Banner -->
+            <div class="panel-card" style="margin-bottom:20px;border-left:4px solid #dc2626;">
+                <div class="panel-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                            <span class="badge badge-critical" id="invIncidentSeverity">CRITICAL</span>
+                            <h2 style="font-size:16px;font-weight:700;" id="invIncidentTitle">Incident #INC-9482: Cascade Latency Degradation</h2>
+                        </div>
+                        <div style="font-size:12px;color:#64748b;" id="invIncidentMeta">
+                            Detected 4m ago &bull; Primary candidate origin: <strong>payment-service</strong> (Confidence: 87.4%)
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-outline" onclick="openIncidentDetailsModal()">View Evidence Timeline</button>
+                        <button class="btn btn-primary" onclick="showRemediationPlaybook()">Remediation Playbook</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2-Col Grid: Timeline & Correlated Topology -->
+            <section class="grid-2col">
+                <!-- Left: Incident Timeline -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div class="panel-title">Incident Event Timeline</div>
+                        <span style="font-size:11px;color:#64748b;">Chronological progression</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="timeline-list" id="invTimelineList">
+                            <!-- Populated dynamically by app.js -->
+                            <div class="timeline-item">
+                                <div class="timeline-marker critical"></div>
+                                <div class="timeline-time">11:30:12 UTC</div>
+                                <div class="timeline-desc"><strong>payment-service</strong>: Latency breached 3.5x MAD threshold (z_r = 5.24).</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-marker warning"></div>
+                                <div class="timeline-time">11:30:24 UTC</div>
+                                <div class="timeline-desc"><strong>order-service</strong>: Downstream caller symptom alert triggered and suppressed.</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-marker healthy"></div>
+                                <div class="timeline-time">11:30:45 UTC</div>
+                                <div class="timeline-desc">Ranking Engine identified payment-service as root candidate (87.4% confidence).</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Candidate Origins & Confidence Ranking -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div class="panel-title">Candidate Root Cause Origins</div>
+                        <span style="font-size:11px;color:#64748b;">Associative 4-factor ranking</span>
+                    </div>
+                    <div class="panel-body" style="padding:0;overflow-x:auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Candidate Service</th>
+                                    <th>Confidence</th>
+                                    <th>Anomalies</th>
+                                    <th>Topological Depth</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invCandidatesTableBody">
+                                <tr>
+                                    <td><strong>payment-service</strong></td>
+                                    <td><span class="badge badge-critical">87.4%</span></td>
+                                    <td>8 detections</td>
+                                    <td>Tier 3 (Database caller)</td>
+                                    <td><button class="btn btn-sm btn-outline" onclick="selectService('payment-service')">Inspect</button></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>order-service</strong></td>
+                                    <td><span class="badge badge-warning">12.6%</span></td>
+                                    <td>2 detections</td>
+                                    <td>Tier 2 (Symptom Caller)</td>
+                                    <td><button class="btn btn-sm btn-outline" onclick="selectService('order-service')">Inspect</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Correlated Logs & Traces Explorer -->
+            <div class="panel-card" style="margin-bottom:20px;">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Correlated Logs & Distributed Traces</div>
+                        <div class="panel-subtitle">Synthesized span telemetry matching the incident window</div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm btn-outline" onclick="filterLogs('ALL')">All</button>
+                        <button class="btn btn-sm btn-outline" onclick="filterLogs('ERROR')">Errors Only</button>
+                    </div>
+                </div>
+                <div class="panel-body" style="padding:0;overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Service</th>
+                                <th>Level</th>
+                                <th>Message / Trace Span</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invLogsTableBody">
+                            <tr>
+                                <td style="font-family:monospace;">11:30:14</td>
+                                <td>payment-service</td>
+                                <td><span class="badge badge-critical">ERROR</span></td>
+                                <td><code>POST /api/v1/payments/process</code> — DB connection pool timeout (3000ms limit reached)</td>
+                                <td>3004 ms</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family:monospace;">11:30:18</td>
+                                <td>order-service</td>
+                                <td><span class="badge badge-warning">WARN</span></td>
+                                <td><code>POST /api/v1/orders</code> — Upstream call to payment-service failed; fallback initiated</td>
+                                <td>3012 ms</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family:monospace;">11:30:22</td>
+                                <td>checkout-api</td>
+                                <td><span class="badge badge-warning">WARN</span></td>
+                                <td><code>POST /checkout</code> — Latency elevated due to pending order confirmation</td>
+                                <td>1850 ms</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Analyst Notes & Feedback Calibration Form -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Analyst Notes & Feedback Engine</div>
+                        <div class="panel-subtitle">Calibrate origin damping factors via operator verification</div>
+                    </div>
+                    <span class="badge badge-info">Damping Calibration</span>
+                </div>
+                <div class="panel-body">
+                    <form id="analystFeedbackForm" onsubmit="submitAnalystFeedback(event)" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;">
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">Incident ID:</label>
+                            <input type="text" id="feedbackIncidentId" value="INC-9482" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;" readonly>
+                        </div>
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">Candidate Origin:</label>
+                            <select id="feedbackOriginSelect" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;">
+                                <option value="payment-service">payment-service</option>
+                                <option value="order-service">order-service</option>
+                                <option value="inventory-service">inventory-service</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">Analyst Verdict:</label>
+                            <select id="feedbackVerdictSelect" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;">
+                                <option value="CONFIRMED">CONFIRMED (True Root Cause)</option>
+                                <option value="FALSE_POSITIVE">FALSE_POSITIVE (Downstream Symptom)</option>
+                                <option value="INCORRECT_ORIGIN">INCORRECT_ORIGIN (Alternative Origin)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary" style="height:35px;">Submit Feedback</button>
+                        </div>
+                    </form>
+                    <div id="feedbackResultBanner" style="display:none;margin-top:12px;padding:8px 12px;background:#dcfce7;color:#166534;border-radius:4px;font-size:12px;">
+                        Feedback recorded. Origin damping factor updated in operational metadata store.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =====================================================================
+             SCREEN 4: DATA AND MODEL QUALITY
+             ===================================================================== -->
+        <div id="screen4" class="screen-view">
+            <!-- Streaming Pipeline & Watermark Strip -->
+            <section class="grid-2col">
+                <!-- Left: Pipeline Lag & Watermarking -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Streaming Broker Partitions & Event Watermark</div>
+                            <div class="panel-subtitle">Event-time watermarking: W = max(T_event) - 30s</div>
+                        </div>
+                        <span class="badge badge-healthy">HEALTHY</span>
+                    </div>
+                    <div class="panel-body">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:12px;">
+                            <span>Dynamic Watermark: <strong id="statWatermark">Synchronizing...</strong></span>
+                            <span>Watermark Delay: <strong id="statWatermarkDelay">0 ms</strong></span>
+                            <span>Quarantined Late: <strong id="statLateCount" style="color:#dc2626;">0</strong></span>
+                        </div>
+                        <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">Broker Partition Distribution:</div>
+                        <div id="partitionLagsContainer" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;margin-bottom:14px;">
+                            <!-- Partition cards -->
+                        </div>
+                        <div style="border-top:1px solid #f1f5f9;padding-top:10px;">
+                            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">Ingest Benchmark Public Datasets:</div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                <button class="btn btn-sm btn-outline" onclick="loadPublicDataset('google_cluster')">Google Cluster</button>
+                                <button class="btn btn-sm btn-outline" onclick="loadPublicDataset('loghub')">LogHub (HDFS Logs)</button>
+                                <button class="btn btn-sm btn-outline" onclick="loadPublicDataset('opentelemetry')">OpenTelemetry Traces</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Dead Letter Queue (DLQ) & Event Replay Engine -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Historical Replay Engine & DLQ Quarantine</div>
+                            <div class="panel-subtitle">Lakehouse historical re-streaming & malformed isolation</div>
+                        </div>
+                        <span class="badge badge-info" id="dlqStatusBadge">DLQ Active</span>
+                    </div>
+                    <div class="panel-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                            <div>
+                                <label style="font-size:11px;color:#64748b;display:block;margin-bottom:2px;">Replay Source:</label>
+                                <select id="replaySourceSelect" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:4px;font-size:11px;">
+                                    <option value="lakehouse">Historical Lakehouse (DuckDB)</option>
+                                    <option value="google_cluster">Google Cluster Traces</option>
+                                    <option value="loghub">LogHub Distributed Logs</option>
+                                    <option value="opentelemetry">OpenTelemetry Traces</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;color:#64748b;display:block;margin-bottom:2px;">Multiplier Speed:</label>
+                                <select id="replaySpeedSelect" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:4px;font-size:11px;">
+                                    <option value="1.0">1x Real-Time</option>
+                                    <option value="5.0" selected>5x Accelerated</option>
+                                    <option value="20.0">20x High Throughput</option>
+                                    <option value="50.0">50x Batch Benchmark</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-bottom:12px;">
+                            <button class="btn btn-sm btn-primary" onclick="startReplay()">Start Replay</button>
+                            <button class="btn btn-sm btn-outline" onclick="pauseReplay()">Pause</button>
+                            <button class="btn btn-sm btn-outline" onclick="resumeReplay()">Resume</button>
+                            <button class="btn btn-sm btn-danger" onclick="stopReplay()">Stop</button>
+                        </div>
+                        <div style="border-top:1px solid #f1f5f9;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:12px;">Quarantined DLQ Violations: <strong id="statDlqTotal" style="color:#dc2626;">0</strong></span>
+                            <div>
+                                <button class="btn btn-sm btn-outline" onclick="openDlqModal()">Inspect DLQ</button>
+                                <button class="btn btn-sm btn-outline" onclick="clearDlq()">Clear DLQ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Feature Drift (PSI) & Latency Monitoring Cards -->
+            <div class="panel-card" style="margin-bottom:20px;">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Model Feature Drift (Population Stability Index — PSI)</div>
+                        <div class="panel-subtitle">Dynamic percentile binning with automated retraining trigger at PSI &ge; 0.25</div>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-sm btn-primary" onclick="triggerModelRetrain()">Retrain Model Now</button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:16px;margin-bottom:16px;" id="psiCardsContainer">
+                        <!-- PSI Card 1: Latency p90 -->
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px 14px;border-radius:6px;">
+                            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Feature: latency_p90</div>
+                            <div style="font-size:22px;font-weight:700;margin:4px 0;" id="psiValLat">0.038</div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span class="badge badge-healthy" id="psiBadgeLat">STABLE (PSI &lt; 0.10)</span>
+                                <span style="font-size:11px;color:#64748b;">500 samples</span>
+                            </div>
+                        </div>
+                        <!-- PSI Card 2: Error Rate -->
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px 14px;border-radius:6px;">
+                            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Feature: error_rate</div>
+                            <div style="font-size:22px;font-weight:700;margin:4px 0;" id="psiValErr">0.042</div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span class="badge badge-healthy" id="psiBadgeErr">STABLE (PSI &lt; 0.10)</span>
+                                <span style="font-size:11px;color:#64748b;">500 samples</span>
+                            </div>
+                        </div>
+                        <!-- PSI Card 3: CPU Utilization -->
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px 14px;border-radius:6px;">
+                            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Feature: cpu_utilization</div>
+                            <div style="font-size:22px;font-weight:700;margin:4px 0;" id="psiValCpu">0.029</div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span class="badge badge-healthy" id="psiBadgeCpu">STABLE (PSI &lt; 0.10)</span>
+                                <span style="font-size:11px;color:#64748b;">500 samples</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#64748b;">
+                        <div>Status: <strong id="modelDriftRecommendationText">Feature distribution nominal. Retraining not required.</strong></div>
+                        <div>Max PSI: <strong id="modelDriftMaxPsi">0.042</strong> &bull; Retrain Threshold: <strong>0.25</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Version & Evaluation Results Table -->
+            <div class="panel-card" style="margin-bottom:20px;">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Model Versions, Evaluation Metrics & Calibration</div>
+                        <div class="panel-subtitle">Audited in SQLite metadata store & verified on SMD benchmark traces</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline" onclick="openBenchmarkReportModal()">View Full Benchmark Report</button>
+                </div>
+                <div class="panel-body" style="padding:0;overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Model Engine</th>
+                                <th>Version</th>
+                                <th>Target / Operational Purpose</th>
+                                <th>Key Evaluation Metric</th>
+                                <th>Inference Latency</th>
+                                <th>Primary Safeguard</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modelEvaluationTableBody">
+                            <tr>
+                                <td><strong>Robust Statistical MAD</strong></td>
+                                <td>1.2.0</td>
+                                <td>Single-metric rolling median baseline</td>
+                                <td>PA-F1 = <strong>1.000</strong></td>
+                                <td>115.6 &mu;s</td>
+                                <td>Zero-MAD non-zero fallback scale estimation</td>
+                            </tr>
+                            <tr>
+                                <td><strong>River HalfSpaceTrees</strong></td>
+                                <td>0.21.0</td>
+                                <td>Streaming multi-dimensional density estimator</td>
+                                <td>PA-F1 = <strong>0.870</strong></td>
+                                <td>152.1 &mu;s</td>
+                                <td>Updates frozen during active operational incidents</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Multivariate Isolation Forest</strong></td>
+                                <td>1.1.0</td>
+                                <td>Unsupervised subspace anomaly detection</td>
+                                <td>PA-F1 = <strong>0.667</strong></td>
+                                <td>4,659.0 &mu;s</td>
+                                <td>Subspace attribution & thread-safe locking</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Incident Risk Predictor</strong></td>
+                                <td>2.1.0</td>
+                                <td>10-minute forward incident emergence</td>
+                                <td>Brier = <strong>0.071</strong> (Acc: 92.4%)</td>
+                                <td>4.2 &mu;s</td>
+                                <td>Recall at 10% Alert Budget Quota = 78.5%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Capacity Forecaster</strong></td>
+                                <td>1.5.0</td>
+                                <td>5m, 15m, 60m Quantile GBR saturation forecaster</td>
+                                <td>Quantile Monotonicity: <strong>VERIFIED</strong></td>
+                                <td>1.8 ms</td>
+                                <td>Enforces p10 &le; p50 &le; p90 monotonic intervals</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Single-Node vs Distributed Architecture Decision Matrix -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Architectural Scaling: Single-Node vs Distributed Processing Decision</div>
+                        <div class="panel-subtitle">Rule: Move to distributed processing only when measurements justify it</div>
+                    </div>
+                    <span class="badge badge-healthy">RETAIN SINGLE-NODE</span>
+                </div>
+                <div class="panel-body">
+                    <div style="font-size:12px;color:#334155;line-height:1.6;margin-bottom:14px;">
+                        Empirical measurements show that our single-node vectorized processing pipeline (DuckDB columnar storage + in-memory partitioned log) handles <strong>1,836 – 4,200 EPS</strong> with a <strong>p99 latency of 14.8 – 24.1 ms</strong> while operating at <strong>&lt; 5% of single-node capacity</strong> (50,000 EPS ceiling). Transitioning prematurely to a distributed architecture (Kafka + Flink + distributed DB) would incur an additional <strong>+15 – 25 ms network hop tail latency penalty</strong>, require 7+ cluster worker nodes, and introduce 4.5x operational maintenance complexity without justification.
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;">
+                        <div style="background:#f8fafc;padding:10px;border-radius:4px;border:1px solid #e2e8f0;font-size:11px;">
+                            <strong>Trigger 1: Sustained Throughput</strong><br>
+                            Threshold: &gt; 100,000 EPS for &gt; 1 hour<br>
+                            Status: <span style="color:#16a34a;font-weight:600;">Current ~2,000 EPS (2% of limit)</span>
+                        </div>
+                        <div style="background:#f8fafc;padding:10px;border-radius:4px;border:1px solid #e2e8f0;font-size:11px;">
+                            <strong>Trigger 2: Analytical Storage</strong><br>
+                            Threshold: &gt; 10 TB Parquet on NVMe<br>
+                            Status: <span style="color:#16a34a;font-weight:600;">Current &lt; 50 GB (Below threshold)</span>
+                        </div>
+                        <div style="background:#f8fafc;padding:10px;border-radius:4px;border:1px solid #e2e8f0;font-size:11px;">
+                            <strong>Trigger 3: Geographic Topology</strong><br>
+                            Threshold: Multi-region active-active WAN<br>
+                            Status: <span style="color:#16a34a;font-weight:600;">Single regional deployment</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal 1: Incident Investigation Timeline Detail -->
+    <div id="incidentModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="font-size:15px;font-weight:700;margin:0;">Incident Evidence, Topology & Timeline</h3>
+                <button class="btn btn-sm btn-outline" onclick="closeIncidentModal()">Close</button>
+            </div>
+            <div id="incidentModalBody" class="modal-body">
+                Loading incident evidence...
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Dead Letter Queue (DLQ) Inspector -->
+    <div id="dlqModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="font-size:15px;font-weight:700;margin:0;">Dead Letter Queue (Quarantined Violations)</h3>
+                <button class="btn btn-sm btn-outline" onclick="closeDlqModal()">Close</button>
+            </div>
+            <div id="dlqModalBody" class="modal-body">
+                Loading quarantined events...
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Full Reproducible Benchmark Report Viewer -->
+    <div id="benchmarkModal" class="modal-overlay">
+        <div class="modal-content" style="max-width:840px;">
+            <div class="modal-header">
+                <h3 style="font-size:15px;font-weight:700;margin:0;">Reproducible Benchmark Report (Single-Node vs Distributed)</h3>
+                <button class="btn btn-sm btn-outline" onclick="closeBenchmarkReportModal()">Close</button>
+            </div>
+            <div id="benchmarkModalBody" class="modal-body" style="font-size:12px;">
+                Loading benchmark results...
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/topology_view.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

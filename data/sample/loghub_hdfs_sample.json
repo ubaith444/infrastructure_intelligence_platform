@@ -1,0 +1,54 @@
+[
+  {
+    "line_id": 1001,
+    "date": "2026-10-12",
+    "time": "14:22:01",
+    "pid": 5832,
+    "level": "INFO",
+    "component": "dfs.DataNode$DataXceiver",
+    "content": "Receiving block blk_-1608999687919862206 src: /10.250.19.102:54106 dest: /10.250.19.102:50010",
+    "event_id": "E5",
+    "event_template": "Receiving block <*> src: <*> dest: <*>",
+    "block_id": "blk_-1608999687919862206",
+    "anomaly_label": "Normal"
+  },
+  {
+    "line_id": 1002,
+    "date": "2026-10-12",
+    "time": "14:22:02",
+    "pid": 5832,
+    "level": "WARN",
+    "component": "dfs.DataNode$DataXceiver",
+    "content": "Slow block transfer blk_-1608999687919862206 took 4820ms exceeding threshold 1000ms",
+    "event_id": "E11",
+    "event_template": "Slow block transfer <*> took <*> exceeding threshold <*>",
+    "block_id": "blk_-1608999687919862206",
+    "anomaly_label": "SlowTransfer"
+  },
+  {
+    "line_id": 1003,
+    "date": "2026-10-12",
+    "time": "14:22:03",
+    "pid": 5834,
+    "level": "ERROR",
+    "component": "dfs.DataNode$PacketResponder",
+    "content": "PacketResponder blk_-1608999687919862206 Interrupted terminating thread",
+    "event_id": "E26",
+    "event_template": "PacketResponder <*> Interrupted terminating thread",
+    "block_id": "blk_-1608999687919862206",
+    "anomaly_label": "Anomaly"
+  },
+  {
+    "line_id": 1004,
+    "date": "2026-10-12",
+    "time": "14:22:04",
+    "pid": 5832,
+    "level": "INFO",
+    "component": "dfs.FSNamesystem",
+    "content": "BLOCK* NameSystem.allocateBlock: /user/data/input.csv. blk_-3544583308289862529",
+    "event_id": "E2",
+    "event_template": "BLOCK* NameSystem.allocateBlock: <*>",
+    "block_id": "blk_-3544583308289862529",
+    "anomaly_label": "Normal"
+  }
+]
