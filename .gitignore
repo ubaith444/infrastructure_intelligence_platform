@@ -1,33 +1,72 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# ==============================================================================
+# Files to Exclude from GitHub Repository
+# ==============================================================================
 
-# Testing & caches
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Node / Frontend
-apps/dashboard/node_modules/
+# Installed dependencies (regenerate with npm install)
 node_modules/
-.vite/
+apps/dashboard/node_modules/
+
+# Generated production build (Cloudflare Pages / CI builds automatically)
 dist/
+build/
+.vite/
 
-# Local databases, lakes & logs
-*.log
-data/lakehouse/
-data/operational_metadata.db
-storage/telemetry.events/
-storage/consumer_offsets.json
+# Environment variables & secrets (API keys, passwords, private variables)
+.env
+.env.local
+.env.production
+.env.*
+*.env
 
-# Environments
+# Python virtual environments (recreate from requirements.txt)
 .venv/
 venv/
 ENV/
+env/
 
-# System & IDE
-.vscode/
-.idea/
+# Generated Python cache & compiled bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+
+# Generated test & coverage output
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+
+# Operating system metadata & thumbnail caches
 .DS_Store
 Thumbs.db
+ehthumbs.db
+
+# Local log files (may contain sensitive or operational data)
+*.log
+logs/
+
+# Personal editor and IDE settings
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Local databases & analytical lakes (private or test data)
+*.sqlite3
+*.db
+data/lakehouse/
+storage/telemetry.events/
+storage/consumer_offsets.json
+
+# Private or large raw datasets
+data/raw/
+
+# Private cryptographic keys & credentials
+*.pem
+*.key
+*.crt
+*.cert
+*.pfx
+*.p12
